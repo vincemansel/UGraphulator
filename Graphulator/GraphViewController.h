@@ -9,19 +9,18 @@
 #import <UIKit/UIKit.h>
 #import "GraphView.h"
 
-@interface GraphViewController : UIViewController <GraphViewDelegate>
+@interface GraphViewController : UIViewController <GraphViewDelegate, UISplitViewControllerDelegate>
 {
-    CGFloat scale;              // 1 to 100. Mod by Zoom Out/In
     CGFloat dataWidth;
     CGFloat dataResolution;
     GraphView *graphView;
     NSArray *graphData;
 }
 
-@property (nonatomic) CGFloat scale, dataWidth, dataResolution;
+@property (nonatomic) CGFloat dataWidth, dataResolution;
 @property (retain) IBOutlet GraphView *graphView;
 @property (retain, nonatomic) NSArray *graphData;
 
-- (IBAction)zoomPressed:(UIButton *)sender;
+//- (IBAction)zoomPressed:(UIButton *)sender;
 
 @end

@@ -10,7 +10,8 @@
 
 @implementation GraphViewController
 
-@synthesize scale, dataWidth, dataResolution;
+//@synthesize scale, dataWidth, dataResolution;
+@synthesize dataWidth, dataResolution;
 @synthesize graphView;
 @synthesize graphData;
 
@@ -19,32 +20,10 @@
     [self.graphView setNeedsDisplay];
 }
 
-//- (void)setGraphData:(NSArray *)newGraphData
-//{
-//    graphData = newGraphData;
-//}
-
-#define MIN_SCALE 1.0
-#define MAX_SCALE 160.0
-
-- (void)setScale:(CGFloat)newScale
+- (void)setGraphData:(NSArray *)newGraphData
 {
-    if (newScale < MIN_SCALE) newScale = MIN_SCALE;
-    if (newScale > MAX_SCALE) newScale = MAX_SCALE;
-    scale = round(newScale);
-    //scale = newScale;
+    graphData = newGraphData;
     [self updateUI];
-}
-
-- (CGFloat)scaleForGraphView:(GraphView *)requestor
-{
-    CGFloat graphScale = 0;
-
-    if (requestor == self.graphView) {
-        graphScale = self.scale;
-    }
-//    NSLog(@"scaleForGraphView: graphScale = %g", graphScale);
-    return graphScale;
 }
 
 - (CGFloat)yValueForGraphView:(GraphView *)requestor
@@ -52,12 +31,12 @@
 {
     CGFloat indexSpan = dataWidth * dataResolution;
     CGFloat index = 0;
-    if (self.scale <= self.dataResolution) {
-        index = ((indexSpan/2) - ((indexSpan/2)/self.scale)) + (x * (self.dataResolution/self.scale));
-        if (x > 0 && self.scale != 16) index -= 1;
+    if (self.graphView.graphScale <= self.dataResolution) {
+        index = ((indexSpan/2) - ((indexSpan/2)/self.graphView.graphScale)) + (x * (self.dataResolution/self.graphView.graphScale));
+        if (x > 0 && self.graphView.graphScale != 16) index -= 1;
     }
-    else if (self.scale >= 32) {
-        index = ((indexSpan/2) - ((indexSpan/2)/self.scale)) + x;
+    else if (self.graphView.graphScale >= 32) {
+        index = ((indexSpan/2) - ((indexSpan/2)/self.graphView.graphScale)) + x;
     }
     
     CGFloat result = [[graphData objectAtIndex:(NSInteger)index] doubleValue];
@@ -67,22 +46,32 @@
     return result;
 }
 
-- (IBAction)zoomPressed:(UIButton *)sender
+- (void)zoomPressed:(NSString *)zoom
 {
     //NSLog(@"Zoom Pressed: %@", sender.titleLabel.text);
     
-    NSString *zoom= sender.titleLabel.text;
+    //NSString *zoom= sender.titleLabel.text;
     
     if ([zoom isEqual:@"Zoom In"]) {
-        if      (self.scale < 32)  self.scale *= 2;
-        else if (self.scale == 32) self.scale = MAX_SCALE/2;
-        else if (self.scale == MAX_SCALE/2) self.scale = MAX_SCALE;
+        if (self.graphView.graphScale + 1 <= MAX_SCALE)
+            self.graphView.graphScale += 1;
     }
     else if ([zoom isEqual:@"Zoom Out"]) {
-        if      (self.scale == MAX_SCALE) self.scale = MAX_SCALE/2;
-        else if (self.scale == MAX_SCALE/2)  self.scale = 32;
-        else if (self.scale == MIN_SCALE)   self.scale = MIN_SCALE;
-        else if (self.scale <= 32)  self.scale /= 2;
+        if (self.graphView.graphScale - 1 >= MIN_SCALE)
+            self.graphView.graphScale -= 1;
+    }
+}
+
+- (void)handlePinch:(UIPinchGestureRecognizer *)gesture
+{
+    if ((gesture.state == UIGestureRecognizerStateChanged) ||
+        (gesture.state == UIGestureRecognizerStateEnded)) {
+        self.graphView.graphScale *= gesture.scale;
+        if (gesture.scale > 1)
+            [self zoomPressed:@"Zoom In"];
+        else
+            [self zoomPressed:@"Zoom Out"];
+        gesture.scale = 1;
     }
 }
 
@@ -97,8 +86,21 @@
 {
     [super viewDidLoad];
     self.graphView.delegate = self;
-    [self updateUI];
+    self.graphView.graphScale = 32;
+    UIGestureRecognizer *pinchgr = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handlePinch:)];
+    [self.graphView addGestureRecognizer:pinchgr];
+    [pinchgr release];
     
+    UIGestureRecognizer *pangr = [[UIPanGestureRecognizer alloc] initWithTarget:self.graphView action:@selector(handlePan:)];
+    [self.graphView addGestureRecognizer:pangr];
+    [pangr release];
+    
+    UITapGestureRecognizer *tapgr = [[UITapGestureRecognizer alloc] initWithTarget:self.graphView action:@selector(handleTap:)];
+    tapgr.numberOfTapsRequired = 2;
+    [self.graphView addGestureRecognizer:tapgr];
+    [tapgr release];
+
+    [self updateUI];
 }
 
 - (void)viewDidUnload
@@ -107,6 +109,22 @@
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
     [self releaseOutlets];
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+    return YES;
+}
+
+- (void)splitViewController:(UISplitViewController *)svc willHideViewController:(UIViewController *)aViewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)pc
+{
+    barButtonItem.title = aViewController.title;
+    self.navigationItem.rightBarButtonItem = barButtonItem;
+}
+
+- (void)splitViewController:(UISplitViewController *)svc willShowViewController:(UIViewController *)aViewController invalidatingBarButtonItem:(UIBarButtonItem *)button
+{
+    self.navigationItem.rightBarButtonItem = nil;
 }
 
 - (void)dealloc

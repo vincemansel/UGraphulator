@@ -19,6 +19,11 @@
     [super dealloc];
 }
 
+- (BOOL) iPad
+{
+    return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
@@ -28,8 +33,21 @@
     UINavigationController *navcon = [[UINavigationController alloc] init];
     CalculatorViewController *cvc = [[CalculatorViewController alloc] init];
     [navcon pushViewController:cvc animated:NO];
+    
+    if (self.iPad) {
+        UISplitViewController *svc = [[UISplitViewController alloc] init];
+        UINavigationController *rightNav = [[UINavigationController alloc] init];
+        [rightNav pushViewController:cvc.graphViewController animated:NO];
+        svc.delegate = cvc.graphViewController;
+        svc.viewControllers = [NSArray arrayWithObjects:navcon, rightNav, nil];
+        [navcon release]; [rightNav release];
+        [self.window addSubview:svc.view];
+        
+    } else {
+        [self.window addSubview:navcon.view];
+    }
+    
     [cvc release];
-    [self.window addSubview:navcon.view];
     [self.window makeKeyAndVisible];
     return YES;
 }

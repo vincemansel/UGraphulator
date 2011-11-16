@@ -10,6 +10,7 @@
 
 @interface GraphulatorAppDelegate : UIResponder <UIApplicationDelegate>
 
+@property (readonly) BOOL iPad;
 @property (strong, nonatomic) UIWindow *window;
 
 @end

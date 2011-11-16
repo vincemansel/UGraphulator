@@ -14,10 +14,13 @@
 {
     IBOutlet UILabel *display;
     BOOL userIsInTheMiddleOfTypingANumber;
+    
+    GraphViewController *graphViewController;
 }
 
 
 @property (nonatomic, retain) IBOutlet UILabel *display;
+@property (readonly) GraphViewController *graphViewController;
 
 
 -(IBAction)digitPressed:(UIButton *)sender;

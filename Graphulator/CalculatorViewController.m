@@ -17,6 +17,12 @@
 @synthesize pBrain;
 @synthesize display;
 
+- (GraphViewController *)graphViewController
+{
+    if (!graphViewController) graphViewController = [[GraphViewController alloc] init];
+    return graphViewController;
+}
+
 - (void)viewDidLoad
 {
     pBrain = [[CalculatorBrain alloc] init];
@@ -26,6 +32,11 @@
 - (void)viewDidUnLoad
 {
     self.display = nil;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+    return YES;
 }
 
 - (BOOL)isfloatingPointOK:(NSString *)displayText
@@ -111,8 +122,12 @@
     return doe2;
 }
 
-#define WIDTH 320
+//#define WIDTH 320
+//#define RESOLUTION 16
+
+#define WIDTH 1600
 #define RESOLUTION 16
+
 
 - (NSArray *)expressionResult
 {    
@@ -133,20 +148,19 @@
 //        if (x == 0 || x == 1) 
 //            NSLog(@"CalculatorViewController.m : expressionResult: x = %g, result = %g, count = %d, rA = %g", x, result, count, [[resultArray lastObject] doubleValue]);
     }
-    [resultArray autorelease];
+    //[resultArray autorelease];
     return (NSArray *)resultArray;
 }
 
 - (IBAction)graphPressed:(UIButton *)sender
 {
-    GraphViewController *gvc = [[GraphViewController alloc] init];
-    gvc.scale = 32;
-    gvc.dataWidth = WIDTH;
-    gvc.dataResolution = RESOLUTION;
-    gvc.graphData = [self expressionResult];
-    gvc.title = [self graphTitle];
-    [self.navigationController pushViewController:gvc animated:YES];
-    [gvc release];
+    self.graphViewController.dataWidth = WIDTH;
+    self.graphViewController.dataResolution = RESOLUTION;
+    self.graphViewController.graphData = [self expressionResult];
+    self.graphViewController.title = [self graphTitle];
+    if (self.graphViewController.view.window == nil) {
+        [self.navigationController pushViewController:graphViewController animated:YES];
+    }
 }
 
 - (void)displayResult:(double)result
@@ -178,6 +192,7 @@
 - (void)dealloc {
     self.display = nil;
     [self.pBrain release];
+    [self.graphViewController release];
     [super dealloc];
 }
 
