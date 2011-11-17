@@ -11,15 +11,15 @@
 
 @interface GraphViewController : UIViewController <GraphViewDelegate, UISplitViewControllerDelegate>
 {
-    CGFloat dataWidth;
-    CGFloat dataResolution;
+    NSInteger dataWidth;
+    NSInteger dataResolution;
     GraphView *graphView;
-    NSArray *graphData;
+    NSDictionary *graphData;
 }
 
-@property (nonatomic) CGFloat dataWidth, dataResolution;
+@property (nonatomic) NSInteger dataWidth, dataResolution;
 @property (retain) IBOutlet GraphView *graphView;
-@property (retain, nonatomic) NSArray *graphData;
+@property (retain, nonatomic) NSDictionary *graphData;
 
 //- (IBAction)zoomPressed:(UIButton *)sender;
 

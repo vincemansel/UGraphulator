@@ -122,34 +122,33 @@
     return doe2;
 }
 
-//#define WIDTH 320
-//#define RESOLUTION 16
-
 #define WIDTH 1600
-#define RESOLUTION 16
+#define RESOLUTION 40
 
-
-- (NSArray *)expressionResult
+- (NSDictionary *)expressionResult
 {    
     CGFloat result;
-    //NSMutableArray *resultArray = [[NSMutableArray alloc] initWithCapacity:WIDTH*RESOLUTION+1];
-    NSMutableArray *resultArray = [[NSMutableArray alloc] init];
+    NSMutableDictionary *resultDictionary = [[NSMutableDictionary alloc] init];
     
-//    CGFloat span = WIDTH * RESOLUTION;
-    CGFloat span = WIDTH;
+    NSInteger span = WIDTH * RESOLUTION;
+    NSInteger resolution = RESOLUTION;
     
-    for (CGFloat x = -span/2; x <= span/2; x += 1.0/RESOLUTION) {
+    for (CGFloat x = -span/2; x <= span/2; x += 1) {
+        //NSNumber *xVal = [NSNumber numberWithFloat:x/resolution]; 
         result = [CalculatorBrain evaluateExpression:pBrain.expression
                                      usingVariableValues:[NSDictionary dictionaryWithObjectsAndKeys:
-                                                          [NSNumber numberWithDouble:x],@"x",
+                                                          [NSNumber numberWithFloat:x/resolution],@"x",
                                                           nil]];
-        [resultArray addObject:[NSNumber numberWithFloat:result]];
-//        NSInteger count = [resultArray count];
-//        if (x == 0 || x == 1) 
-//            NSLog(@"CalculatorViewController.m : expressionResult: x = %g, result = %g, count = %d, rA = %g", x, result, count, [[resultArray lastObject] doubleValue]);
+//        NSNumber *index = [NSNumber numberWithInt:x];
+//        [resultDictionary setObject:[NSNumber numberWithFloat:result] forKey:index];
+        [resultDictionary setObject:[NSNumber numberWithFloat:result] forKey:[NSNumber numberWithInteger:x]];
+//        NSInteger count = [resultDictionary count];
+//        if (x >= -10 && x <= 10)
+//            NSLog(@"CalculatorViewController.m : expressionResult: x = %g, xVal = %@, index = %@, result = %g, count = %d, rD = %g",
+//                  x, xVal, index, result, count, [[resultDictionary objectForKey:index] doubleValue]);
     }
-    //[resultArray autorelease];
-    return (NSArray *)resultArray;
+//    NSLog(@"%@", resultDictionary);
+    return (NSDictionary *)resultDictionary;
 }
 
 - (IBAction)graphPressed:(UIButton *)sender

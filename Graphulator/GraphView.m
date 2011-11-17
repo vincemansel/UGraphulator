@@ -37,7 +37,7 @@
 
 - (CGFloat)graphScale
 {
-    if (!(graphScale >= MIN_SCALE && graphScale <= MAX_SCALE)) graphScale = DEFAULT_SCALE;
+    //if (!(graphScale >= MIN_SCALE && graphScale <= MAX_SCALE)) graphScale = DEFAULT_SCALE;
     return graphScale;
 }
 
@@ -45,7 +45,7 @@
 {
     if (newScale < MIN_SCALE) newScale = MIN_SCALE;
     if (newScale > MAX_SCALE) newScale = MAX_SCALE;
-    graphScale = round(newScale);
+    graphScale = newScale;
     [self setNeedsDisplay];
 }
 
@@ -75,7 +75,22 @@
         [self setNeedsDisplay];
 }
 
-// Pinch is handled in GraphViewController.m
+
+- (void)handlePinch:(UIPinchGestureRecognizer *)gesture
+{
+    if ((gesture.state == UIGestureRecognizerStateChanged) ||
+        (gesture.state == UIGestureRecognizerStateEnded)) {
+        self.graphScale *= gesture.scale;
+//        if (gesture.scale > 1)
+//            if (self.graphScale + 1 <= MAX_SCALE)
+//                self.graphScale += 1;
+//        else
+//            if (self.graphScale - 1 >= MIN_SCALE)
+//                self.graphScale -= 1;
+        gesture.scale = 1;
+    }
+}
+
 
 -(void)handlePan:(UIPanGestureRecognizer *)recognizer
 {
@@ -114,45 +129,63 @@
     
     [AxesDrawer drawAxesInRect:self.bounds originAtPoint:midPoint scale:graphScale];
     
-    CGFloat widthInPoints = self.bounds.size.width / graphScale;
+//    CGFloat widthInPoints = self.bounds.size.width / graphScale;
     
-    NSLog(@"drawRect: > widthInPoints = %g", widthInPoints);
+//    NSLog(@"drawRect: > widthInPoints = %g :: graphScale = %g", widthInPoints, graphScale);
     
 //    NSLog(@"GraphView.m > drawRect: Pixels per Point=%g", self.contentScaleFactor);
 //    NSLog(@"GraphView.m > drawRect: midPoint=%g:%g", midPoint.x, midPoint.y);
     
-    CGFloat widthInPixel = self.bounds.size.width * self.contentScaleFactor;
-    CGFloat heightInPixel = self.bounds.size.height * self.contentScaleFactor;
-    CGFloat halfPixelWidth = widthInPixel/2;
-    CGFloat halfPixelHeight = heightInPixel/2;
+    CGFloat widthInPixels = self.bounds.size.width * self.contentScaleFactor;
+    CGFloat heightInPixels = self.bounds.size.height * self.contentScaleFactor;
+    CGFloat halfPixelWidth = widthInPixels/2;
+    CGFloat halfPixelHeight = heightInPixels/2;
     
-    int dataRangeBoundary; //self.contentScaleFactor;
-    int xAxisBoundary;
+    int xMove = 8/self.contentScaleFactor;
     
-    dataRangeBoundary = halfPixelWidth;
-    xAxisBoundary = dataRangeBoundary/graphScale;
-    
-    CGFloat xIncrement = (graphScale / (dataRangeBoundary / xAxisBoundary));
-    int xMove = 2/self.contentScaleFactor;
+//    NSLog(@"halfPixelWidth = %g", halfPixelWidth);
     
     CGContextSetLineWidth(context, 1.0);
     [[UIColor blackColor] setStroke];
     CGContextBeginPath(context);
     
+    // Draw from midPoint out in both +/- directions
+    
     CGPoint p;
-    p.x = self.origin.x;
-    CGFloat yC = [self.delegate yValueForGraphView:self forX:0];
-    p.y = (halfPixelHeight/self.contentScaleFactor) - (yC * graphScale) + self.origin.y;
+    p.x = midPoint.x;
+    CGFloat xVal = 0;
+    CGFloat yVal = [self.delegate yValueForGraphView:self forX:xVal];
+    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
     CGContextMoveToPoint(context, p.x, p.y);
     
-    for (int x = xMove; x <= dataRangeBoundary * xMove; x += xMove) {
-        p.x = x * xIncrement + self.origin.x;
-        yC = [self.delegate yValueForGraphView:self forX:(CGFloat)x];
-        p.y = (halfPixelHeight/self.contentScaleFactor) - (yC * graphScale) + self.origin.y;
+    for (int x = xMove; x <= halfPixelWidth * xMove; x += xMove) {
+        p.x = midPoint.x + x;
+        xVal = (CGFloat)x / graphScale;
+        yVal = [self.delegate yValueForGraphView:self forX:(CGFloat)xVal];
+        p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+        
+        //NSLog(@"x = %d, p.x = %g, xVal = %g, yC = %g, p.y = %g", x, p.x, xVal, yVal, p.y);
         CGContextAddLineToPoint(context, p.x, p.y);
     }
     CGContextStrokePath(context);
-//    NSLog(@" ");
+    
+    CGContextBeginPath(context);
+    p.x = midPoint.x;
+    xVal = 0;
+    yVal = [self.delegate yValueForGraphView:self forX:xVal];
+    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+    CGContextMoveToPoint(context, p.x, p.y);
+    
+    for (int x = -xMove; x >= -halfPixelWidth * xMove; x -= xMove) {
+        p.x = midPoint.x + x;
+        CGFloat xVal = x / graphScale;
+        yVal = [self.delegate yValueForGraphView:self forX:(CGFloat)xVal];
+        p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+        //NSLog(@"x = %d, p.x = %g, xVal = %g, yC = %g, p.y = %g", x, p.x, xVal, yVal, p.y);
+        CGContextAddLineToPoint(context, p.x, p.y);
+    }
+    CGContextStrokePath(context);
+    //NSLog(@" ");
 }
 
 - (void)dealloc
