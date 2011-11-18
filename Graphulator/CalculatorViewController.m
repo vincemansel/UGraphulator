@@ -11,11 +11,20 @@
 @interface CalculatorViewController()
 @property (retain) CalculatorBrain *pBrain;
 -(void)displayResult:(double)result;
+- (NSDictionary *)expressionResult;
 @end;
 
 @implementation CalculatorViewController
 @synthesize pBrain;
 @synthesize display;
+
+- (id)init
+{
+    if (self = [super init]) {
+        
+    }
+    return self;
+}
 
 - (GraphViewController *)graphViewController
 {
@@ -23,10 +32,48 @@
     return graphViewController;
 }
 
+#define MARGIN 5.0
+
+- (CGSize)contentSizeForViewInPopover
+{
+    NSArray *subViews = self.view.subviews;
+    CGRect unionRect;
+    
+    // Also: this worked: self.view.bounds.size.[width height]
+    
+    for (UIView *view in subViews) {
+        CGRect r2 = view.frame;
+        unionRect = CGRectUnion(unionRect, r2);
+    }
+    CGSize size = CGSizeMake(unionRect.size.width + MARGIN, unionRect.size.height + (2 * MARGIN));
+    return size;
+}
+
+- (void)replayExpression:(id)expressionPlist
+{
+    pBrain.expression = (NSMutableArray *)expressionPlist;
+    if ([CalculatorBrain variablesInExpression:pBrain.expression]) {
+        [display setText:[CalculatorBrain descriptionOfExpression:pBrain.expression]];
+        self.graphViewController.graphData = [self expressionResult];
+    }
+
+}
+
+#pragma mark - View lifecycle
+
 - (void)viewDidLoad
 {
     pBrain = [[CalculatorBrain alloc] init];
     self.title = @"Graphulator";
+    
+    NSDictionary * expressionDictionary = [[NSUserDefaults standardUserDefaults] objectForKey:@"expression"];
+//    NSLog(@"CalculatorViewController > viewDidLoad: expressionDictionary %@",expressionDictionary);
+//    NSLog(@"CalculatorViewController > viewDidLoad: expressionArray %@",[expressionDictionary objectForKey:@"anExpression"]);
+    id expressionPlist = [CalculatorBrain expressionForPropertyList:expressionDictionary];
+//    NSLog(@"CalculatorViewController > viewDidLoad: expressionPlist: %@",expressionPlist);
+    if (expressionPlist)
+        [self replayExpression:expressionPlist];
+    [expressionDictionary release];
 }
 
 - (void)viewDidUnLoad
@@ -36,7 +83,10 @@
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
 {
-    return YES;
+    if (self.splitViewController != nil) return YES;
+    else if (toInterfaceOrientation == UIInterfaceOrientationPortrait) // Forces an Iphone back to Portrait for Calculator screen only
+        return YES;
+    return NO;
 }
 
 - (BOOL)isfloatingPointOK:(NSString *)displayText
@@ -160,6 +210,11 @@
     if (self.graphViewController.view.window == nil) {
         [self.navigationController pushViewController:graphViewController animated:YES];
     }
+    
+    NSDictionary *plist = [CalculatorBrain propertyListForExpression:self.pBrain.expression];
+    [[NSUserDefaults standardUserDefaults] setObject:plist forKey:@"expression"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    //[plist release];
 }
 
 - (void)displayResult:(double)result

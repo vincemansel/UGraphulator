@@ -46,10 +46,14 @@ NSString *vp = VARIABLE_PREFIX;
 
 -(id)expression
 {
-//    id returnExpression = [internalExpression  copy];
-//    [returnExpression autorelease];
-//    return returnExpression;
     return [NSArray arrayWithArray:internalExpression];
+}
+
+- (void)setExpression:(id)anExpression
+{
+    internalExpression = (NSMutableArray *)anExpression;
+    //if (!internalExpression) internalExpression = [[NSMutableArray alloc] init];
+    [internalExpression retain];
 }
 
 +(double)evaluateExpression:(id)anExpression
@@ -126,15 +130,23 @@ NSString *vp = VARIABLE_PREFIX;
     return expressionDescription;
 }
 
-//+(id)propertyListForExpression:(id)anExpression
-//{
-//    
-//}
-//
-//+(id)expressionForPropertyList:(id)propertyList
-//{
-//    
-//}
++(id)propertyListForExpression:(id)anExpression
+{
+    return [NSDictionary dictionaryWithObject:anExpression forKey:@"anExpression"]; 
+}
+
++(id)expressionForPropertyList:(id)propertyList
+{
+    id anExpression = nil;
+    if ([propertyList isKindOfClass:[NSDictionary class]]) {
+        for (id obj in propertyList) {
+            if ([obj isKindOfClass:[NSString class]]) {
+                anExpression = [propertyList objectForKey:@"anExpression"];
+            }
+        }
+    }
+    return anExpression;
+}
 
 -(void)setDegOrRad:(BOOL)switchSetting
 {

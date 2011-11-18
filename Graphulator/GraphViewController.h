@@ -18,7 +18,8 @@
 }
 
 @property (nonatomic) NSInteger dataWidth, dataResolution;
-@property (retain) IBOutlet GraphView *graphView;
+//@property (retain) IBOutlet GraphView *graphView;
+@property (retain) GraphView *graphView;
 @property (retain, nonatomic) NSDictionary *graphData;
 
 //- (IBAction)zoomPressed:(UIButton *)sender;

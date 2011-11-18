@@ -16,10 +16,16 @@
 - (void)setup
 {
     self.contentMode = UIViewContentModeRedraw;
+    
+    CGFloat savedGraphScale = [[NSUserDefaults standardUserDefaults] floatForKey:@"graphScale"];
+    if (savedGraphScale != 0) self.graphScale = savedGraphScale;
+        
+    //NSLog(@"GraphView > setup: graphScale = %g, saved = %g", self.graphScale, savedGraphScale);
 }
 
 - (id)initWithFrame:(CGRect)frame
 {
+//    NSLog(@"GraphView > initWithFrame:");
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization code
@@ -30,14 +36,15 @@
 
 - (void)awakeFromNib
 {
+    NSLog(@"GraphView > awakeFromNib:");
     [self setup];
 }
 
-#define DEFAULT_SCALE 32
+#define DEFAULT_SCALE 35
 
 - (CGFloat)graphScale
 {
-    //if (!(graphScale >= MIN_SCALE && graphScale <= MAX_SCALE)) graphScale = DEFAULT_SCALE;
+    if (graphScale == 0) graphScale = DEFAULT_SCALE;
     return graphScale;
 }
 
@@ -47,6 +54,8 @@
     if (newScale > MAX_SCALE) newScale = MAX_SCALE;
     graphScale = newScale;
     [self setNeedsDisplay];
+    [[NSUserDefaults standardUserDefaults] setFloat:graphScale forKey:@"graphScale"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (CGPoint)origin
@@ -71,8 +80,12 @@
         originChanged = YES;
     }
 
-    if (originChanged)
+    if (originChanged) {
         [self setNeedsDisplay];
+        [[NSUserDefaults standardUserDefaults] setFloat:origin.x forKey:@"origin.x"];
+        [[NSUserDefaults standardUserDefaults] setFloat:origin.y forKey:@"origin.y"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    }
 }
 
 
@@ -113,9 +126,6 @@
 - (void)drawRect:(CGRect)rect
 {
     CGPoint midPoint;
-//    midPoint.x = self.bounds.origin.x + self.bounds.size.width/2;
-//    midPoint.y = self.bounds.origin.y + self.bounds.size.height/2;
-    
     midPoint.x = self.bounds.origin.x + self.bounds.size.width/2 + self.origin.x;
     midPoint.y = self.bounds.origin.y + self.bounds.size.height/2 + self.origin.y;
     
@@ -127,12 +137,10 @@
     CGContextSetLineWidth(context, 2.0);
     [[UIColor blueColor] setStroke]; 
     
-    [AxesDrawer drawAxesInRect:self.bounds originAtPoint:midPoint scale:graphScale];
+    [AxesDrawer drawAxesInRect:self.bounds originAtPoint:midPoint scale:self.graphScale];
     
-//    CGFloat widthInPoints = self.bounds.size.width / graphScale;
-    
-//    NSLog(@"drawRect: > widthInPoints = %g :: graphScale = %g", widthInPoints, graphScale);
-    
+//    CGFloat widthInPoints = self.bounds.size.width / self.graphScale;
+//    NSLog(@"drawRect: > widthInPoints = %g :: graphScale = %g", widthInPoints, self.graphScale);    
 //    NSLog(@"GraphView.m > drawRect: Pixels per Point=%g", self.contentScaleFactor);
 //    NSLog(@"GraphView.m > drawRect: midPoint=%g:%g", midPoint.x, midPoint.y);
     
@@ -155,17 +163,22 @@
     p.x = midPoint.x;
     CGFloat xVal = 0;
     CGFloat yVal = [self.delegate yValueForGraphView:self forX:xVal];
-    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * self.graphScale) + self.origin.y;
+    CGFloat lastVal = yVal;
     CGContextMoveToPoint(context, p.x, p.y);
+    
+    // Experiment: the positive draw has a smoothing algorithm. Looks better at smaller values
+    // Large values need more data. But more data means more delay from graphPressed to drawing.
     
     for (int x = xMove; x <= halfPixelWidth * xMove; x += xMove) {
         p.x = midPoint.x + x;
-        xVal = (CGFloat)x / graphScale;
+        xVal = (CGFloat)x / self.graphScale;
         yVal = [self.delegate yValueForGraphView:self forX:(CGFloat)xVal];
-        p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
-        
-        //NSLog(@"x = %d, p.x = %g, xVal = %g, yC = %g, p.y = %g", x, p.x, xVal, yVal, p.y);
-        CGContextAddLineToPoint(context, p.x, p.y);
+        if (yVal != lastVal) {
+            p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * self.graphScale) + self.origin.y;
+            CGContextAddLineToPoint(context, p.x, p.y);
+        }
+        lastVal = yVal;
     }
     CGContextStrokePath(context);
     
@@ -173,14 +186,14 @@
     p.x = midPoint.x;
     xVal = 0;
     yVal = [self.delegate yValueForGraphView:self forX:xVal];
-    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+    p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * self.graphScale) + self.origin.y;
     CGContextMoveToPoint(context, p.x, p.y);
     
     for (int x = -xMove; x >= -halfPixelWidth * xMove; x -= xMove) {
         p.x = midPoint.x + x;
-        CGFloat xVal = x / graphScale;
+        CGFloat xVal = x / self.graphScale;
         yVal = [self.delegate yValueForGraphView:self forX:(CGFloat)xVal];
-        p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * graphScale) + self.origin.y;
+        p.y = (halfPixelHeight/self.contentScaleFactor) - (yVal * self.graphScale) + self.origin.y;
         //NSLog(@"x = %d, p.x = %g, xVal = %g, yC = %g, p.y = %g", x, p.x, xVal, yVal, p.y);
         CGContextAddLineToPoint(context, p.x, p.y);
     }

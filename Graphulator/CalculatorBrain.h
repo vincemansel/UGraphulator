@@ -29,7 +29,7 @@
 -(void)setVariableAsOperand:(NSString *)variableName;
 -(double)performOperation:(NSString *)operation;
 
-@property (readonly) id expression;
+@property (retain) id expression;
 
 +(double)evaluateExpression:(id)anExpression
          usingVariableValues:(NSDictionary *)values;
@@ -37,7 +37,7 @@
 +(NSSet *)variablesInExpression:(id)anExpression;
 +(NSString *)descriptionOfExpression:(id)anExpression;
 
-//+(id)propertyListForExpression:(id)anExpression;
-//+(id)expressionForPropertyList:(id)propertyList;
++(id)propertyListForExpression:(id)anExpression;
++(id)expressionForPropertyList:(id)propertyList;
 
 @end

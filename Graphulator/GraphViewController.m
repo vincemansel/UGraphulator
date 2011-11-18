@@ -14,6 +14,16 @@
 @synthesize graphView;
 @synthesize graphData;
 
+- (void)loadView
+{
+    //CGRect frame = [[UIScreen mainScreen] bounds];
+    //graphView = [[GraphView alloc] initWithFrame:frame];
+    graphView = [[GraphView alloc] init];
+    graphView.backgroundColor = [UIColor whiteColor];
+    self.view = graphView;
+    [graphView release];
+}
+
 - (void)updateUI
 {
     [self.graphView setNeedsDisplay];
@@ -28,7 +38,6 @@
 - (CGFloat)yValueForGraphView:(GraphView *)requestor
                          forX:(CGFloat)x
 {
-    //NSInteger indexSpan = dataWidth * dataResolution;
     NSInteger index = (NSInteger)(x * dataResolution);
     
     //NSLog(@"yValueForGraphView: index = %d", index);
@@ -47,7 +56,6 @@
 {
     [super viewDidLoad];
     self.graphView.delegate = self;
-    self.graphView.graphScale = 30;
     
     UIGestureRecognizer *pinchgr = [[UIPinchGestureRecognizer alloc] initWithTarget:self.graphView action:@selector(handlePinch:)];
     [self.graphView addGestureRecognizer:pinchgr];
@@ -63,6 +71,16 @@
     [tapgr release];
 
     [self updateUI];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    CGFloat x = [[NSUserDefaults standardUserDefaults] floatForKey:@"origin.x"];
+    CGFloat y = [[NSUserDefaults standardUserDefaults] floatForKey:@"origin.y"];
+    self.graphView.origin = CGPointMake(x, y);
+    
+    //NSLog(@"GraphViewController > viewWillAppear: graphScale = %g, origin = %g:%g, saved = %g:%g", self.graphView.graphScale, self.graphView.origin.x, self.graphView.origin.y, x, y);
 }
 
 - (void)viewDidUnload
