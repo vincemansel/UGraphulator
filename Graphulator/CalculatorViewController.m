@@ -49,14 +49,18 @@
     return size;
 }
 
+#define WIDTH 1600
+#define RESOLUTION 40
+
 - (void)replayExpression:(id)expressionPlist
 {
     pBrain.expression = (NSMutableArray *)expressionPlist;
     if ([CalculatorBrain variablesInExpression:pBrain.expression]) {
         [display setText:[CalculatorBrain descriptionOfExpression:pBrain.expression]];
+        self.graphViewController.dataWidth = WIDTH;
+        self.graphViewController.dataResolution = RESOLUTION;
         self.graphViewController.graphData = [self expressionResult];
     }
-
 }
 
 #pragma mark - View lifecycle
@@ -171,9 +175,6 @@
     NSString * doe2 = [CalculatorBrain descriptionOfExpression:pBrain.expression];
     return doe2;
 }
-
-#define WIDTH 1600
-#define RESOLUTION 40
 
 - (NSDictionary *)expressionResult
 {    

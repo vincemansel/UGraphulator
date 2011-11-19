@@ -83,6 +83,12 @@
     //NSLog(@"GraphViewController > viewWillAppear: graphScale = %g, origin = %g:%g, saved = %g:%g", self.graphView.graphScale, self.graphView.origin.x, self.graphView.origin.y, x, y);
 }
 
+//- (void)viewDidAppear:(BOOL)animated
+//{
+//    [super viewDidAppear:animated];
+//    [self updateUI];
+//}
+
 - (void)viewDidUnload
 {
     [super viewDidUnload];
